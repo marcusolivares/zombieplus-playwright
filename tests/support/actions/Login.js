@@ -13,10 +13,10 @@ export class Login {
     }
 
     async visit() {
-        await this.page.goto('http://localhost:3000/admin/login');
+        await this.page.goto('/admin/login');
 
         const loginForm = this.page.locator('.login-form')
-        await expect(loginForm).toBeVisible
+        await expect(loginForm).toBeVisible()
     }
 
     async submit(email, password) {
