@@ -1,6 +1,6 @@
 const { expect } = require('@playwright/test')
 
-export class Movies {
+class Movies {
 
     constructor(page) {
         this.page = page
@@ -34,6 +34,9 @@ export class Movies {
     async search(target) {
         await this.page.getByPlaceholder('Busque pelo nome').fill(target)
         await this.page.click('.actions button')
+        // Wait for search results to load
+        await this.page.waitForLoadState('networkidle')
+        await this.page.getByRole('row').first().waitFor({ state: 'visible' })
     }
 
     async tableHave(content) {
@@ -50,3 +53,5 @@ export class Movies {
         await this.page.click('.confirm-removal')
     }
 }
+
+module.exports = { Movies }

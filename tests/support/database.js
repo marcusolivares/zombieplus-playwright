@@ -10,16 +10,18 @@ const DbConfig = {
     port: process.env.DB_PORT
 }
 
-export async function executeSQL(sqlScript) {
-
+async function executeSQL(sqlScript) {
+    const pool = new Pool(DbConfig)
     try {
-        const pool = new Pool(DbConfig)
         const client = await pool.connect()
         const result = await client.query(sqlScript)
         // console.log(result.rows)
+        client.release()
     } catch (error) {
-        console.log('Error when executing SQL ' + error)
+        console.error('Error executing SQL:', error)
+    } finally {
+        await pool.end()
     }
-
-    
 }
+
+module.exports = { executeSQL }

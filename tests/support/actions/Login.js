@@ -1,6 +1,6 @@
 const { expect } = require('@playwright/test')
 
-export class Login {
+class Login {
 
     constructor(page) {
         this.page = page
@@ -38,3 +38,5 @@ export class Login {
         await expect(loggedUser).toHaveText(`Olá, ${username}`)
     }
 }
+
+module.exports = { Login }

@@ -1,8 +1,8 @@
 require('dotenv').config()
 
-const { test, expect } = require('@playwright/test');
+const { expect } = require('@playwright/test');
 
-export class Api {
+class Api {
 
     constructor(request) {
         this.baseApi = process.env.BASE_API
@@ -13,8 +13,8 @@ export class Api {
     async setToken() {
         const response = await this.request.post(this.baseApi + '/sessions', {
             data: {
-                email: 'admin@zombieplus.com',
-                password: 'pwd123'
+                email: process.env.ADMIN_EMAIL,
+                password: process.env.ADMIN_PASSWORD
             }
         })
 
@@ -82,4 +82,15 @@ export class Api {
         expect(response.ok()).toBeTruthy()
     }
 
+    async postLead(name, email) {
+        const response = await this.request.post(this.baseApi + '/leads', {
+            data: {
+                name: name,
+                email: email
+            }
+        })
+        return response
+    }
 }
+
+module.exports = { Api }

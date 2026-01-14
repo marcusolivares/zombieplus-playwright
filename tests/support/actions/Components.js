@@ -1,6 +1,6 @@
 const { expect } = require('@playwright/test')
 
-export class Popup {
+class Popup {
 
     constructor(page) {
         this.page = page
@@ -11,3 +11,5 @@ export class Popup {
         await expect(element).toHaveText(message)
     }
 }
+
+module.exports = { Popup }

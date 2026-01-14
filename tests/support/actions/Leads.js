@@ -1,6 +1,6 @@
-import { expect } from '@playwright/test';
+const { expect } = require('@playwright/test');
 
-export class Leads {
+class Leads {
 
     constructor(page) {
         this.page = page
@@ -25,3 +25,5 @@ export class Leads {
         await expect(this.page.locator('.alert')).toHaveText(target)
     }
 }
+
+module.exports = { Leads }

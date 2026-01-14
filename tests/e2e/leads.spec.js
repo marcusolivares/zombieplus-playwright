@@ -20,13 +20,7 @@ test('should\'nt register if email already is registered', async ({ page, reques
   const leadName = faker.person.fullName()
   const leadEmail = faker.internet.email()
 
-  const newLead = await request.post('http://localhost:3333/leads', {
-    data: {
-      name: leadName,
-      email: leadEmail
-    }
-  })
-
+  const newLead = await request.api.postLead(leadName, leadEmail)
   expect(newLead.ok()).toBeTruthy()
 
   await page.leads.visit()
