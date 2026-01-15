@@ -7,7 +7,7 @@ Repositório do projeto de testes automatizados do sistema Zombie Plus, constru�
 ## 💻 Tecnologias
 - Node.js
 - Playwright
-- Javascript
+- TypeScript
 - Faker
 - PostgreSQL
 
@@ -20,12 +20,22 @@ npm install
 
 2. Executar testes em Headless
 ```
-npx playwright test 
+npm test
 ```
 
-3. Executar ver o relatório dos testes
+3. Executar testes com UI interativa
 ```
-npx playwright show-report
+npm run test:ui
+```
+
+4. Executar testes em modo debug
+```
+npm run test:debug
+```
+
+5. Ver o relatório dos testes
+```
+npm run test:report
 ```
 
 <hr>
