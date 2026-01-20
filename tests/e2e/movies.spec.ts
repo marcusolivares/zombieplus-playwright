@@ -1,5 +1,6 @@
 import { test, expect } from '../support'
 import { executeSQL } from '../support/database'
+import { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, ERROR_MESSAGES } from '../support/constants'
 
 const data = require('../support/fixtures/movies.json')
 
@@ -7,56 +8,50 @@ test.beforeAll(async () => {
   await executeSQL(`DELETE from movies`)
 })
 
-test('should be able to register a new movie', async ({ page: anyPage }) => {
-  const page = anyPage as any
+test('should be able to register a new movie', async ({ page }) => {
   const movie = data.create
-  await page.login.do(process.env.ADMIN_EMAIL || 'admin@zombieplus.com', process.env.ADMIN_PASSWORD || 'pwd123', 'Admin')
+  await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.movies.create(movie)
-  await page.popup.haveText(`O filme '${movie.title}' foi adicionado ao catálogo.`)
+  await page.popup.haveText(ERROR_MESSAGES.MOVIE_ADDED(movie.title))
 })
 
-test('should be able to remove a movie', async ({ page: anyPage, request: anyRequest }) => {
-  const page = anyPage as any
-  const request = anyRequest as any
+test('should be able to remove a movie', async ({ page, request }) => {
   const movie = data.to_remove
   await request.api.postMovie(movie)
 
-  await page.login.do(process.env.ADMIN_EMAIL || 'admin@zombieplus.com', process.env.ADMIN_PASSWORD || 'pwd123', 'Admin')
+  await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.movies.remove(movie.title)
-  await page.popup.haveText('Filme removido com sucesso.')
+  await page.popup.haveText(ERROR_MESSAGES.MOVIE_REMOVED)
 })
 
-test('shouldn\'t register if title is already registered', async ({ page: anyPage, request: anyRequest }) => {
-  const page = anyPage as any
-  const request = anyRequest as any
+test('shouldn\'t register if title is already registered', async ({ page, request }) => {
   const movie = data.duplicate
   await request.api.postMovie(movie)
 
-  await page.login.do(process.env.ADMIN_EMAIL || 'admin@zombieplus.com', process.env.ADMIN_PASSWORD || 'pwd123', 'Admin')
+  await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.movies.create(movie)
-  await page.popup.haveText(`O título '${movie.title}' já consta em nosso catálogo. Por favor, verifique se há necessidade de atualizações ou correções para este item.`)
+  await page.popup.haveText(ERROR_MESSAGES.DUPLICATE_MOVIE(movie.title))
 })
 
-test('shouldn\'t register if mandatory fields aren\'t filled', async ({ page: anyPage }) => {
-  const page = anyPage as any
-  await page.login.do(process.env.ADMIN_EMAIL || 'admin@zombieplus.com', process.env.ADMIN_PASSWORD || 'pwd123', 'Admin')
+test('shouldn\'t register if mandatory fields aren\'t filled', async ({ page }) => {
+  await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.movies.goForm()
   await page.movies.submit()
   await page.movies.alertHaveText([
-    'Campo obrigatório',
-    'Campo obrigatório',
-    'Campo obrigatório',
-    'Campo obrigatório'
+    ERROR_MESSAGES.REQUIRED_FIELD,
+    ERROR_MESSAGES.REQUIRED_FIELD,
+    ERROR_MESSAGES.REQUIRED_FIELD,
+    ERROR_MESSAGES.REQUIRED_FIELD
   ])
 })
 
-test('should be able to search for term zombie', async ({ page: anyPage, request: anyRequest }) => {
-  const page = anyPage as any
-  const request = anyRequest as any
+test('should be able to search for term zombie', async ({ page, request }) => {
+  const page_local = page
+  const request_local = request
   const movies = data.search
-  await Promise.all(movies.data.map((m: any) => request.api.postMovie(m)))
+  await Promise.all(movies.data.map((m: any) => request_local.api.postMovie(m)))
 
-  await page.login.do(process.env.ADMIN_EMAIL || 'admin@zombieplus.com', process.env.ADMIN_PASSWORD || 'pwd123', 'Admin')
-  await page.movies.search(movies.input)
-  await page.movies.tableHave(movies.outputs)
+  await page_local.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
+  await page_local.movies.search(movies.input)
+  await page_local.movies.tableHave(movies.outputs)
 })

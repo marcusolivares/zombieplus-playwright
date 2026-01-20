@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test'
+import { test as base, expect, Page, APIRequestContext } from '@playwright/test'
 
 import { Leads } from './actions/Leads'
 import { Login } from './actions/Login'
@@ -23,26 +23,33 @@ declare global {
   }
 }
 
-const test = base.extend({
+type TestFixtures = {
+  page: Page & {
+    leads: Leads
+    login: Login
+    movies: Movies
+    popup: Popup
+    tvshows: TvShows
+  }
+  request: APIRequestContext & {
+    api: Api
+  }
+}
+
+const test = base.extend<TestFixtures>({
   page: async ({ page }, use) => {
-    const context: any = page
+    ;(page as any).leads = new Leads(page)
+    ;(page as any).login = new Login(page)
+    ;(page as any).movies = new Movies(page)
+    ;(page as any).popup = new Popup(page)
+    ;(page as any).tvshows = new TvShows(page)
 
-    context.leads = new Leads(page)
-    context.login = new Login(page)
-    context.movies = new Movies(page)
-    context.popup = new Popup(page)
-    context.tvshows = new TvShows(page)
-
-    await use(context)
+    await use(page)
   },
   request: async ({ request }, use) => {
-    const context: any = request
-
-    context.api = new Api(request)
-
-    await context.api.setToken()
-
-    await use(context)
+    ;(request as any).api = new Api(request)
+    await (request as any).api.setToken()
+    await use(request)
   }
 })
 

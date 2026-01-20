@@ -1,14 +1,6 @@
 import { expect, Page } from '@playwright/test'
-
-interface TvShow {
-  title: string
-  overview: string
-  company: string
-  release_year: number
-  featured: boolean
-  season: number
-  cover: string
-}
+import { TvShow } from '../types'
+import { SELECTORS } from '../constants'
 
 export class TvShows {
   private page: Page
@@ -34,15 +26,15 @@ export class TvShows {
     await this.goForm()
     await this.page.getByLabel('Titulo da série').fill(tvshow.title)
     await this.page.getByLabel('Sinopse').fill(tvshow.overview)
-    await this.page.locator('#select_company_id .react-select__indicator').click()
-    await this.page.locator('.react-select__option').filter({ hasText: tvshow.company }).click()
-    await this.page.locator('#select_year .react-select__indicator').click()
-    await this.page.locator('.react-select__option').filter({ hasText: tvshow.release_year.toString() }).click()
+    await this.page.locator(SELECTORS.COMPANY_SELECT).click()
+    await this.page.locator(SELECTORS.SELECT_OPTION).filter({ hasText: tvshow.company }).click()
+    await this.page.locator(SELECTORS.YEAR_SELECT).click()
+    await this.page.locator(SELECTORS.SELECT_OPTION).filter({ hasText: tvshow.release_year.toString() }).click()
     await this.page.getByLabel('Temporadas').fill(tvshow.season.toString())
-    await this.page.locator('input[name=cover]').setInputFiles('tests/support/fixtures' + tvshow.cover)
+    await this.page.locator(SELECTORS.COVER_INPUT).setInputFiles('tests/support/fixtures' + tvshow.cover)
 
     if (tvshow.featured) {
-      await this.page.locator('.featured .react-switch').click()
+      await this.page.locator(SELECTORS.FEATURED_SWITCH).click()
     }
 
     await this.submit()
@@ -63,7 +55,7 @@ export class TvShows {
   }
 
   async alertHaveText(target: string | string[]): Promise<void> {
-    await expect(this.page.locator('.alert')).toHaveText(target)
+    await expect(this.page.locator(SELECTORS.ALERT)).toHaveText(target)
   }
 
   async remove(title: string): Promise<void> {

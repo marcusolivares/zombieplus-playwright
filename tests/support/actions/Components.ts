@@ -1,4 +1,5 @@
 import { expect, Page } from '@playwright/test'
+import { SELECTORS } from '../constants'
 
 export class Popup {
   private page: Page
@@ -8,7 +9,7 @@ export class Popup {
   }
 
   async haveText(message: string | string[]): Promise<void> {
-    const element = this.page.locator('.swal2-html-container')
+    const element = this.page.locator(SELECTORS.POPUP)
     await expect(element).toHaveText(message)
   }
 }

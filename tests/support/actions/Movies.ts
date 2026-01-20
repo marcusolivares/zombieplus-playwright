@@ -1,13 +1,6 @@
 import { expect, Page } from '@playwright/test'
-
-interface Movie {
-  title: string
-  overview: string
-  company: string
-  release_year: number
-  featured: boolean
-  cover: string
-}
+import { Movie } from '../types'
+import { SELECTORS, ERROR_MESSAGES } from '../constants'
 
 export class Movies {
   private page: Page
@@ -28,14 +21,14 @@ export class Movies {
     await this.goForm()
     await this.page.getByLabel('Titulo do filme').fill(movie.title)
     await this.page.getByLabel('Sinopse').fill(movie.overview)
-    await this.page.locator('#select_company_id .react-select__indicator').click()
-    await this.page.locator('.react-select__option').filter({ hasText: movie.company }).click()
-    await this.page.locator('#select_year .react-select__indicator').click()
-    await this.page.locator('.react-select__option').filter({ hasText: movie.release_year.toString() }).click()
-    await this.page.locator('input[name=cover]').setInputFiles('tests/support/fixtures' + movie.cover)
+    await this.page.locator(SELECTORS.COMPANY_SELECT).click()
+    await this.page.locator(SELECTORS.SELECT_OPTION).filter({ hasText: movie.company }).click()
+    await this.page.locator(SELECTORS.YEAR_SELECT).click()
+    await this.page.locator(SELECTORS.SELECT_OPTION).filter({ hasText: movie.release_year.toString() }).click()
+    await this.page.locator(SELECTORS.COVER_INPUT).setInputFiles('tests/support/fixtures' + movie.cover)
 
     if (movie.featured) {
-      await this.page.locator('.featured .react-switch').click()
+      await this.page.locator(SELECTORS.FEATURED_SWITCH).click()
     }
 
     await this.submit()
@@ -55,7 +48,7 @@ export class Movies {
   }
 
   async alertHaveText(target: string | string[]): Promise<void> {
-    await expect(this.page.locator('.alert')).toHaveText(target)
+    await expect(this.page.locator(SELECTORS.ALERT)).toHaveText(target)
   }
 
   async remove(title: string): Promise<void> {

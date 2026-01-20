@@ -1,4 +1,5 @@
 import { expect, Page } from '@playwright/test'
+import { SELECTORS, LOGIN_STRINGS } from '../constants'
 
 export class Login {
   private page: Page
@@ -16,7 +17,7 @@ export class Login {
   async visit(): Promise<void> {
     await this.page.goto('/admin/login')
 
-    const loginForm = this.page.locator('.login-form')
+    const loginForm = this.page.locator(SELECTORS.LOGIN_FORM)
     await expect(loginForm).toBeVisible()
   }
 
@@ -32,7 +33,7 @@ export class Login {
   }
 
   async isLoggedIn(username: string): Promise<void> {
-    const loggedUser = this.page.locator('.logged-user')
-    await expect(loggedUser).toHaveText(`Olá, ${username}`)
+    const loggedUser = this.page.locator(SELECTORS.LOGGED_USER)
+    await expect(loggedUser).toHaveText(LOGIN_STRINGS.USERNAME_GREETING(username))
   }
 }

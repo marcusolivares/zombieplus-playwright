@@ -1,23 +1,6 @@
 import 'dotenv/config'
 import { expect, APIRequestContext } from '@playwright/test'
-
-interface Movie {
-  title: string
-  overview: string
-  company: string
-  release_year: number
-  featured: boolean
-  cover?: string
-}
-
-interface TvShow extends Movie {
-  season: number
-}
-
-interface Lead {
-  name: string
-  email: string
-}
+import { Movie, TvShow, Lead } from '../types'
 
 export class Api {
   private baseApi: string | undefined
@@ -33,8 +16,8 @@ export class Api {
   async setToken(): Promise<void> {
     const response = await this.request.post(this.baseApi + '/sessions', {
       data: {
-        email: process.env.ADMIN_EMAIL || 'admin@zombieplus.com',
-        password: process.env.ADMIN_PASSWORD || 'pwd123'
+        email: process.env.ADMIN_EMAIL,
+        password: process.env.ADMIN_PASSWORD
       }
     })
 
@@ -101,13 +84,11 @@ export class Api {
     expect(response.ok()).toBeTruthy()
   }
 
-  async postLead(name: string, email: string): Promise<any> {
+  async postLead(lead: Lead): Promise<Lead> {
     const response = await this.request.post(this.baseApi + '/leads', {
-      data: {
-        name,
-        email
-      }
+      data: lead
     })
-    return response
+    expect(response.ok()).toBeTruthy()
+    return await response.json()
   }
 }
