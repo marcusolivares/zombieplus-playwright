@@ -1,4 +1,5 @@
 const { expect } = require('@playwright/test')
+const { SELECTORS, FIXTURES_PATH } = require('../selectors')
 
 class Movies {
 
@@ -7,50 +8,50 @@ class Movies {
     }
 
     async goForm() {
-        await this.page.locator('a[href$="register"]').click()
+        await this.page.locator(SELECTORS.MOVIES_REGISTER_LINK).click()
     }
 
     async submit() {
-        await this.page.getByRole('button', {name: 'Cadastrar'}).click()
+        await this.page.getByRole('button', {name: SELECTORS.REGISTER_BTN}).click()
     }
 
     async create(movie) {
         await this.goForm()
-        await this.page.getByLabel('Titulo do filme').fill(movie.title)
-        await this.page.getByLabel('Sinopse').fill(movie.overview)
-        await this.page.locator('#select_company_id .react-select__indicator').click()
-        await this.page.locator('.react-select__option').filter({hasText: movie.company}).click()
-        await this.page.locator('#select_year .react-select__indicator').click()
-        await this.page.locator('.react-select__option').filter({hasText: movie.release_year}).click()
-        await this.page.locator('input[name=cover]').setInputFiles('tests/support/fixtures' + movie.cover)
+        await this.page.getByLabel(SELECTORS.MOVIE_TITLE_LABEL).fill(movie.title)
+        await this.page.getByLabel(SELECTORS.MOVIE_SYNOPSIS_LABEL).fill(movie.overview)
+        await this.page.locator(SELECTORS.MOVIE_COMPANY_SELECT + ' ' + SELECTORS.REACT_SELECT_INDICATOR).click()
+        await this.page.locator(SELECTORS.REACT_SELECT_OPTION).filter({hasText: movie.company}).click()
+        await this.page.locator(SELECTORS.MOVIE_YEAR_SELECT + ' ' + SELECTORS.REACT_SELECT_INDICATOR).click()
+        await this.page.locator(SELECTORS.REACT_SELECT_OPTION).filter({hasText: movie.release_year}).click()
+        await this.page.locator(SELECTORS.MOVIE_COVER_INPUT).setInputFiles(FIXTURES_PATH + movie.cover)
 
         if (movie.featured) {
-            await this.page.locator('.featured .react-switch').click()
+            await this.page.locator(SELECTORS.MOVIE_FEATURED_SWITCH).click()
         }
         
         await this.submit()
     }
 
     async search(target) {
-        await this.page.getByPlaceholder('Busque pelo nome').fill(target)
+        await this.page.getByPlaceholder(SELECTORS.SEARCH_INPUT).fill(target)
         await this.page.click('.actions button')
         // Wait for search results to load
         await this.page.waitForLoadState('networkidle')
-        await this.page.getByRole('row').first().waitFor({ state: 'visible' })
+        await this.page.getByRole(SELECTORS.ROWS).first().waitFor({ state: 'visible' })
     }
 
     async tableHave(content) {
-        const rows = this.page.getByRole('row')
+        const rows = this.page.getByRole(SELECTORS.ROWS)
         await expect(rows).toContainText(content)
     }
 
     async alertHaveText(target) {
-        await expect(this.page.locator('.alert')).toHaveText(target)
+        await expect(this.page.locator(SELECTORS.ALERT)).toHaveText(target)
     }
 
     async remove(title) {
-        await this.page.getByRole('row', {name: title}).getByRole('button').click()
-        await this.page.click('.confirm-removal')
+        await this.page.getByRole(SELECTORS.ROWS, {name: title}).getByRole('button').click()
+        await this.page.click(SELECTORS.CONFIRM_REMOVAL_BTN)
     }
 }
 

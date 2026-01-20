@@ -1,4 +1,5 @@
 const { expect } = require('@playwright/test');
+const { SELECTORS } = require('../selectors')
 
 class Leads {
 
@@ -11,18 +12,18 @@ class Leads {
     }
 
     async openLeadModal() {
-        await this.page.getByRole('button', {name: /Aperte o play/}).click();
-        await expect(this.page.getByTestId('modal').getByRole('heading')).toHaveText('Fila de espera')
+        await this.page.getByRole('button', {name: SELECTORS.PLAY_BTN}).click();
+        await expect(this.page.getByTestId(SELECTORS.MODAL).getByRole(SELECTORS.MODAL_HEADING)).toHaveText('Fila de espera')
     }
 
     async submitLeadForm(name, email) {
-        await this.page.getByPlaceholder('Informe seu nome').fill(name)
-        await this.page.getByPlaceholder('Informe seu email').fill(email)
-        await this.page.getByTestId('modal').getByText('Quero entrar na fila!').click()
+        await this.page.getByPlaceholder(SELECTORS.NAME_PLACEHOLDER).fill(name)
+        await this.page.getByPlaceholder(SELECTORS.LEAD_EMAIL_PLACEHOLDER).fill(email)
+        await this.page.getByTestId(SELECTORS.MODAL).getByText(SELECTORS.MODAL_TEXT).click()
     }
     
     async alertHaveText(target) {
-        await expect(this.page.locator('.alert')).toHaveText(target)
+        await expect(this.page.locator(SELECTORS.ALERT)).toHaveText(target)
     }
 }
 

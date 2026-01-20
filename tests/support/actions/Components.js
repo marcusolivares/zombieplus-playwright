@@ -1,4 +1,5 @@
 const { expect } = require('@playwright/test')
+const { SELECTORS } = require('../selectors')
 
 class Popup {
 
@@ -7,7 +8,7 @@ class Popup {
     }
 
     async haveText(message) {
-        const element = this.page.locator('.swal2-html-container')
+        const element = this.page.locator(SELECTORS.POPUP_CONTAINER)
         await expect(element).toHaveText(message)
     }
 }
