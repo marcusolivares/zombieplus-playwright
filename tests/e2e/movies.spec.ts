@@ -1,6 +1,7 @@
 import { test, expect } from '../support'
 import { executeSQL } from '../support/database'
 import { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../support/constants'
+import { Movie } from '../support/types'
 
 const data = require('../support/fixtures/movies.json')
 
@@ -49,7 +50,7 @@ test('should be able to search for term zombie', async ({ page, request }) => {
   const page_local = page
   const request_local = request
   const movies = data.search
-  await Promise.all(movies.data.map((m: any) => request_local.api.postMovie(m)))
+  await Promise.all(movies.data.map((m: Movie) => request_local.api.postMovie(m)))
 
   await page_local.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page_local.movies.search(movies.input)

@@ -1,6 +1,7 @@
 import { test, expect } from '../support'
 import { executeSQL } from '../support/database'
 import { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../support/constants'
+import { TvShow } from '../support/types'
 
 const data = require('../support/fixtures/tvshows.json')
 
@@ -49,7 +50,7 @@ test('shouldn\'t register if mandatory fields aren\'t filled', async ({ page }) 
 
 test('should be able to search for term zombie', async ({ page, request }) => {
   const tvshows = data.search
-  await Promise.all(tvshows.data.map((t: any) => request.api.postTvShow(t)))
+  await Promise.all(tvshows.data.map((t: TvShow) => request.api.postTvShow(t)))
 
   await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.tvshows.search(tvshows.input)
