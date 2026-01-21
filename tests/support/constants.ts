@@ -10,6 +10,10 @@ export const ERROR_MESSAGES = {
   DUPLICATE_MOVIE: (title: string) =>
     `O título '${title}' já consta em nosso catálogo. Por favor, verifique se há necessidade de atualizações ou correções para este item.`,
   DUPLICATE_LEAD: 'Verificamos que o endereço de e-mail fornecido já consta em nossa lista de espera. Isso significa que você está um passo mais perto de aproveitar nossos serviços.',
+}
+
+// UI Success Messages
+export const SUCCESS_MESSAGES = {
   MOVIE_ADDED: (title: string) => `O filme '${title}' foi adicionado ao catálogo.`,
   MOVIE_REMOVED: 'Filme removido com sucesso.',
   TVSHOW_ADDED: (title: string) => `A série '${title}' foi adicionada ao catálogo.`,

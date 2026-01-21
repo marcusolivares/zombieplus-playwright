@@ -1,6 +1,6 @@
 import { test, expect } from '../support'
 import { executeSQL } from '../support/database'
-import { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, ERROR_MESSAGES } from '../support/constants'
+import { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../support/constants'
 
 const data = require('../support/fixtures/movies.json')
 
@@ -12,7 +12,7 @@ test('should be able to register a new movie', async ({ page }) => {
   const movie = data.create
   await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.movies.create(movie)
-  await page.popup.haveText(ERROR_MESSAGES.MOVIE_ADDED(movie.title))
+  await page.popup.haveText(SUCCESS_MESSAGES.MOVIE_ADDED(movie.title))
 })
 
 test('should be able to remove a movie', async ({ page, request }) => {
@@ -21,7 +21,7 @@ test('should be able to remove a movie', async ({ page, request }) => {
 
   await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.movies.remove(movie.title)
-  await page.popup.haveText(ERROR_MESSAGES.MOVIE_REMOVED)
+  await page.popup.haveText(SUCCESS_MESSAGES.MOVIE_REMOVED)
 })
 
 test('shouldn\'t register if title is already registered', async ({ page, request }) => {

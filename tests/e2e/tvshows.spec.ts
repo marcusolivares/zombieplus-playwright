@@ -1,6 +1,6 @@
 import { test, expect } from '../support'
 import { executeSQL } from '../support/database'
-import { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, ERROR_MESSAGES } from '../support/constants'
+import { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../support/constants'
 
 const data = require('../support/fixtures/tvshows.json')
 
@@ -12,7 +12,7 @@ test('should be able to register a new tv show', async ({ page }) => {
   const tvshow = data.create
   await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.tvshows.create(tvshow)
-  await page.popup.haveText(ERROR_MESSAGES.TVSHOW_ADDED(tvshow.title))
+  await page.popup.haveText(SUCCESS_MESSAGES.TVSHOW_ADDED(tvshow.title))
 })
 
 test('should be able to remove a tv show', async ({ page, request }) => {
@@ -21,7 +21,7 @@ test('should be able to remove a tv show', async ({ page, request }) => {
 
   await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.tvshows.remove(tvshow.title)
-  await page.popup.haveText(ERROR_MESSAGES.TVSHOW_REMOVED)
+  await page.popup.haveText(SUCCESS_MESSAGES.TVSHOW_REMOVED)
 })
 
 test('shouldn\'t register if title is already registered', async ({ page, request }) => {

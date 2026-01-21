@@ -1,7 +1,7 @@
 import { test, expect } from '../support'
 import { faker } from '@faker-js/faker'
 import { executeSQL } from '../support/database'
-import { ERROR_MESSAGES } from '../support/constants'
+import { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../support/constants'
 
 test.beforeAll(async () => {
   await executeSQL(`DELETE from leads`)
@@ -13,7 +13,7 @@ test('should register a lead in the waiting queue', async ({ page }) => {
   await page.leads.visit()
   await page.leads.openLeadModal()
   await page.leads.submitLeadForm(leadName, leadEmail)
-  await page.popup.haveText(ERROR_MESSAGES.LEAD_SUCCESS)
+  await page.popup.haveText(SUCCESS_MESSAGES.LEAD_SUCCESS)
 })
 
 test('should\'nt register if email already is registered', async ({ page, request }) => {
@@ -54,4 +54,16 @@ test('shouldn\'t register if name and email are missing', async ({ page }) => {
   await page.leads.openLeadModal()
   await page.leads.submitLeadForm('', '')
   await page.leads.alertHaveText([ERROR_MESSAGES.REQUIRED_FIELD, ERROR_MESSAGES.REQUIRED_FIELD])
+})
+
+test('should delete a lead in the waiting queue', async ({ page }) => {
+  const leadName = faker.person.fullName()
+  const leadEmail = faker.internet.email()
+  await page.leads.visit()
+  await page.leads.openLeadModal()
+  await page.leads.submitLeadForm(leadName, leadEmail)
+  await page.popup.haveText(SUCCESS_MESSAGES.LEAD_SUCCESS)
+  await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
+  await page.leads.goLeads()
+  await page.leads.deleteLead(leadName)
 })
