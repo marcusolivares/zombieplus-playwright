@@ -22,16 +22,16 @@ export class Point {
   }
 
   private async fillAddressStep(): Promise<void> {
-    await this.page.getByText("What’s your home address?").fill("778 Colorado Ave, Palo Alto, CA 94303")
+    await this.page.getByRole('combobox', { name: "What’s your home address?"}).fill("778 Colorado Ave, Palo Alto, CA 94303")
     await this.page.getByRole('button', { name: /See if my home qualifies/i }).click()
     await this.page.getByRole('button', { name: /^Continue$/i }).click()
   }
 
   private async fillPersonalInfoStep(): Promise<void> {
-    await this.page.getByPlaceholder("First name").fill("Marcus")
-    await this.page.getByPlaceholder("Last name").fill("Olivares")
-    await this.page.getByPlaceholder("Email address").fill("testgroup@point.com")
-    await this.page.getByPlaceholder("Phone number").fill("(650) 446-4315")
+    await this.page.getByRole('textbox', { name: 'First name' }).fill("Marcus")
+    await this.page.getByRole('textbox', { name: 'Last name' }).fill("Olivares")
+    await this.page.getByRole('textbox', { name: 'Email address' }).fill("testgroup@point.com")
+    await this.page.getByRole('textbox', { name: 'Phone number' }).fill("(650) 446-4315")
   }
 
   private async clickViewOfferButton(): Promise<void> {
@@ -39,13 +39,13 @@ export class Point {
   }
 
   private async fillFinancialInfoStep(): Promise<void> {
-    await this.page.getByPlaceholder("Your mortgage balance").fill("100000")
+    await this.page.getByRole('textbox', { name: 'Your mortgage balance' }).fill('100000')
     await this.page.getByRole('button', { name: /^Continue$/i }).click()
   }
 
   private async selectCreditScore(): Promise<void> {
     await this.page.getByRole('radio', { name: /Excellent/i }).click()
-    await this.page.getByRole('button', { name: /^Continue$/i }).last().click()
+    await this.page.getByRole('button', { name: /^Continue$/i }).click()
   }
 
   private async skipAndValidateOffer(): Promise<void> {
@@ -54,7 +54,7 @@ export class Point {
   }
 
   private async validateOfferAmount(): Promise<void> {
-    const h1Text = await this.page.locator('h1').textContent()
+    const h1Text = await this.page.getByRole('heading', { level: 1 }).textContent()
     const numberMatch = h1Text?.match(/\$([0-9,]+)/)
     const number = numberMatch ? parseInt(numberMatch[1].replace(/,/g, '')) : 0
     expect(number).toBeGreaterThan(0)

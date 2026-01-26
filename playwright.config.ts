@@ -36,7 +36,7 @@ export default defineConfig({
     //video: 'retain-on-failure'
     baseURL: process.env.BASE_URL,
     viewport: { width: 1920, height: 1080 },
-    // headless: false
+    headless: false
   },
 
   /* Configure projects for major browsers */
