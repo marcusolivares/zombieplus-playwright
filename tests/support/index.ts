@@ -5,6 +5,7 @@ import { Login } from './actions/Login'
 import { Movies } from './actions/Movies'
 import { Popup } from './actions/Components'
 import { TvShows } from './actions/TvShows'
+import { Point } from './actions/Point'
 
 import { Api } from './api'
 
@@ -16,6 +17,7 @@ declare global {
       movies: Movies
       popup: Popup
       tvshows: TvShows
+      point: Point
     }
     interface APIRequestContext {
       api: Api
@@ -29,6 +31,7 @@ type PageWithFixtures = Page & {
   movies: Movies
   popup: Popup
   tvshows: TvShows
+  point: Point
 }
 
 type RequestWithApi = APIRequestContext & {
@@ -47,6 +50,7 @@ const test = base.extend<TestFixtures>({
     ;(page as PageWithFixtures).movies = new Movies(page)
     ;(page as PageWithFixtures).popup = new Popup(page)
     ;(page as PageWithFixtures).tvshows = new TvShows(page)
+    ;(page as PageWithFixtures).point = new Point(page)
 
     await use(page)
   },
