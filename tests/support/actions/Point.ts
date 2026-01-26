@@ -44,7 +44,7 @@ export class Point {
   }
 
   private async selectCreditScore(): Promise<void> {
-    await this.page.getByRole('radio', { name: /Excellent/i }).click()
+    await this.page.getByRole('radio', { name: /Excellent/i }).check()
     await this.page.getByRole('button', { name: /^Continue$/i }).click()
   }
 
