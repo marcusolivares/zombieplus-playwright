@@ -18,6 +18,7 @@
     "@types/node": "^24.7.0",
     "@types/pg": "^8.16.0",
     "pg": "^8.16.3",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
