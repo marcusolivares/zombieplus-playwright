@@ -37,14 +37,22 @@ export class Movies {
   async search(target: string): Promise<void> {
     await this.page.getByPlaceholder('Busque pelo nome').fill(target)
     await this.page.click('.actions button')
-    // Wait for search results to load
-    await this.page.waitForLoadState('networkidle')
-    await this.page.getByRole('row').first().waitFor({ state: 'visible' })
   }
 
   async tableHave(content: string | string[]): Promise<void> {
-    const rows = this.page.getByRole('row')
-    await expect(rows).toContainText(content)
+    // Row text includes title + overview + metadata and ordering can vary.
+    // Assert against the table container to make this order-independent.
+    const table = this.page.locator('table')
+    await expect(table).toBeVisible()
+
+    if (Array.isArray(content)) {
+      for (const item of content) {
+        await expect(table).toContainText(item, { timeout: 15000 })
+      }
+      return
+    }
+
+    await expect(table).toContainText(content, { timeout: 15000 })
   }
 
   async alertHaveText(target: string | string[]): Promise<void> {

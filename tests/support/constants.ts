@@ -31,8 +31,9 @@ export const SELECTORS = {
   LOGGED_USER: '.logged-user',
   CONFIRM_REMOVAL: '.confirm-removal',
   FEATURED_SWITCH: '.featured .react-switch',
-  COMPANY_SELECT: '#select_company_id .react-select__indicator',
-  YEAR_SELECT: '#select_year .react-select__indicator',
+  // react-select renders multiple indicators (loading + dropdown). Target the dropdown indicator to avoid strict-mode conflicts.
+  COMPANY_SELECT: '#select_company_id .react-select__dropdown-indicator',
+  YEAR_SELECT: '#select_year .react-select__dropdown-indicator',
   SELECT_OPTION: '.react-select__option',
   COVER_INPUT: 'input[name=cover]'
 }

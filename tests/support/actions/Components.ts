@@ -12,4 +12,12 @@ export class Popup {
     const element = this.page.locator(SELECTORS.POPUP)
     await expect(element).toHaveText(message)
   }
+
+  async close(): Promise<void> {
+    // SweetAlert2 confirm button
+    const confirm = this.page.locator('.swal2-confirm')
+    if (await confirm.count()) {
+      await confirm.first().click()
+    }
+  }
 }

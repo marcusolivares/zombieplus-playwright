@@ -60,7 +60,7 @@ export class TvShows {
 
   async remove(title: string): Promise<void> {
     await this.goTvShows()
-    await this.page.getByRole('row', { name: title }).getByRole('button').click()
+    await this.page.getByRole('row', { name: title }).first().getByRole('button').first().click()
     await this.page.click('.confirm-removal')
   }
 }
