@@ -62,5 +62,28 @@
                 "cover": "/covers/tvshows/404.png"
             }
         ]
+    },
+    "to_edit": {
+        "title": "Série Zumbi Original",
+        "overview": "Uma série original sobre zumbis que será editada durante os testes.",
+        "company": "Universal Pictures",
+        "release_year": 2020,
+        "featured": false,
+        "season": 3,
+        "cover": "/covers/tvshows/404.png"
+    },
+    "edited_title": {
+        "title": "Série Zumbi Original - Edição Especial",
+        "overview": "Uma série original sobre zumbis que será editada durante os testes."
+    },
+    "edited_seasons": {
+        "title": "Série Zumbi Original",
+        "season": 5
+    },
+    "edge_case_zero_seasons": {
+        "season": 0
+    },
+    "edge_case_many_seasons": {
+        "season": 99
     }
 }

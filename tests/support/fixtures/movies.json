@@ -56,6 +56,29 @@
         "cover": "/caminho/para/meu_namorado_e_um_zumbi.png"
       }
     ]
+  },
+  "to_edit": {
+    "title": "Zumbi sem Censura",
+    "overview": "Um filme original sobre zumbis que será editado durante os testes.",
+    "company": "Universal Pictures",
+    "release_year": 2020,
+    "featured": false,
+    "cover": "/covers/movies/mortos-vivos.jpg"
+  },
+  "edited_title": {
+    "title": "Zumbi sem Censura - Edição Especial",
+    "overview": "Um filme original sobre zumbis que será editado durante os testes."
+  },
+  "edited_synopsis": {
+    "title": "Zumbi sem Censura",
+    "overview": "Sinopse completamente atualizada com novos detalhes sobre a produção do filme de terror."
+  },
+  "for_featured_toggle": {
+    "title": "Filme para Teste de Destaque",
+    "overview": "Este filme será usado para testar a funcionalidade de alternar o status de destaque.",
+    "company": "Netflix",
+    "release_year": 2023,
+    "featured": false,
+    "cover": "/covers/movies/wwz.png"
   }
 }
-  

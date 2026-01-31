@@ -5,7 +5,7 @@ import { Movie } from '../support/types'
 
 const data = require('../support/fixtures/movies.json')
 
-test.beforeAll(async () => {
+test.beforeEach(async () => {
   await executeSQL(`DELETE from movies`)
 })
 
@@ -21,13 +21,20 @@ test('should be able to remove a movie', async ({ page, request }) => {
   await request.api.postMovie(movie)
 
   await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
+  await page.movies.goToList()
   await page.movies.remove(movie.title)
   await page.popup.haveText(SUCCESS_MESSAGES.MOVIE_REMOVED)
 })
 
 test('shouldn\'t register if title is already registered', async ({ page, request }) => {
   const movie = data.duplicate
+  // Ensure the movie is created via API
   await request.api.postMovie(movie)
+  // Verify the movie exists in the database before proceeding
+  await expect(async () => {
+    const result = await executeSQL(`SELECT id FROM movies WHERE title = '${movie.title}'`)
+    expect(result.length).toBeGreaterThan(0)
+  }).toPass({ timeout: 5000 })
 
   await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.movies.create(movie)

@@ -27,7 +27,13 @@ test('should be able to remove a tv show', async ({ page, request }) => {
 
 test('shouldn\'t register if title is already registered', async ({ page, request }) => {
   const tvshow = data.duplicate
+  // Ensure the TV show is created via API
   await request.api.postTvShow(tvshow)
+  // Verify the TV show exists in the database before proceeding
+  await expect(async () => {
+    const result = await executeSQL(`SELECT id FROM tvshows WHERE title = '${tvshow.title}'`)
+    expect(result.length).toBeGreaterThan(0)
+  }).toPass({ timeout: 5000 })
 
   await page.login.do(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, 'Admin')
   await page.tvshows.create(tvshow)

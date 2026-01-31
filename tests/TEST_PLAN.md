@@ -1,564 +1,1054 @@
-## ZombiePlus Application – Comprehensive Test Plan
+# Zombie Plus - Comprehensive Test Plan
 
-### Application Overview
+## Application Overview
 
-The ZombiePlus application is a media management and lead-capture platform focused on zombie-themed content. From the existing tests and helpers, the application provides:
+Zombie Plus is a streaming platform administration system for managing zombie-themed movies, TV shows, and user leads (waitlist). The application consists of:
 
-- **Public Lead Capture**: Landing page at `/` with a “Aperte o play” call-to-action that opens a “Fila de espera” modal for collecting name and email.
-- **Admin Authentication**: Login form at `/admin/login` using environment-configured admin credentials.
-- **Movie Catalog Management**: Admin can register, search, and remove movies with fields like title, synopsis, company, year, cover image, and “featured” flag.
-- **TV Show Catalog Management**: Admin can register, search, and remove TV shows with similar fields plus a seasons count.
-- **Search and Listing**: Search for titles (e.g., “zombie”) in movies and TV shows and validate table contents.
-- **Notifications and Validation**: Rich success and error messaging (alerts and SweetAlert popups), field-level validation, and duplicate-entry prevention.
-
----
-
-## Global Assumptions and Test Basis
-
-- **Environment / Data**
-  - Database is reachable and can be reset between test runs (e.g., `DELETE FROM leads/movies/tvshows`).
-  - Admin credentials (`ADMIN_EMAIL`, `ADMIN_PASSWORD`) are configured and valid.
-  - Test fixtures for movies and TV shows exist and are representative of real content.
-- **Browser / Device**
-  - Tests are executed on modern desktop browsers (at least Chromium), at 100% zoom, default viewport.
-- **Starting State**
-  - Unless otherwise noted, each scenario starts from a **fresh browser session** and **empty relevant tables** (leads/movies/tvshows) or with data specifically seeded for that scenario.
-- **User Roles**
-  - **Anonymous User**: Can access the public landing page and submit leads.
-  - **Admin User**: Authenticated via `/admin/login`, can manage movies, TV shows, and leads.
+- **Public Landing Page:** Allows users to join a waiting queue by providing name and email
+- **Admin Portal:** Authenticated area for managing content
+  - Movies: CRUD operations, search, featured toggle, cover image upload
+  - TV Shows: CRUD operations with seasons field, search, featured toggle
+  - Leads: View and delete registered leads from the waitlist
 
 ---
 
-## 1. Lead Capture – Waiting Queue
+## Existing Test Coverage Summary
 
-### 1.1 Register Lead with Valid Name and Email
+The current test suite (28 tests) covers:
 
-**Seed / Precondition:**
-- `leads` table empty (no existing lead with target email).
+| Area | Tests | Coverage |
+|------|-------|----------|
+| Admin Login | 4 | Success, invalid password, invalid email, required fields |
+| Leads | 7 | Register, duplicate, validation errors, delete |
+| Movies | 5 | Create, delete, duplicate prevention, required fields, search |
+| TV Shows | 5 | Create, delete, duplicate prevention, required fields, search |
+| Movie Catalog | 1 | Search no results |
+| TV Show Catalog | 1 | Seasons numeric validation |
+| Non-Functional | 2 | Search performance, route protection |
+| UI/UX | 2 | Modal behavior, success messages |
+
+---
+
+## NEW Test Scenarios - Gap Analysis
+
+The following scenarios represent meaningful gaps in the current test coverage.
+
+---
+
+## 1. Authentication and Session Management (NEW)
+
+### 1.1 Admin Logout Functionality
+**Seed / Precondition:** User is logged in as Admin
 
 **Steps:**
-1. Navigate to the landing page `/`.
-2. Click the “Aperte o play” button.
-3. In the “Fila de espera” modal, fill `Nome` with a valid full name (e.g., “Maria da Silva”).
-4. Fill `Email` with a valid email (e.g., `maria@example.com`).
-5. Click “Quero entrar na fila!”.
+1. Navigate to admin panel at `/admin/login`
+2. Log in with valid admin credentials
+3. Verify user is logged in (greeting message visible)
+4. Locate and click on logout button or user menu
+5. Confirm logout action if prompted
 
 **Expected Results:**
-- Modal remains visible until submission is processed.
-- A success popup appears with text matching `SUCCESS_MESSAGES.LEAD_SUCCESS`.
-- No error alerts are shown on the lead form.
-- Lead record is stored in `leads` with the given name and email.
+- User is redirected to login page
+- Admin greeting message is no longer visible
+- Protected routes are no longer accessible without re-authentication
 
 ---
 
-### 1.2 Prevent Duplicate Lead by Email
-
-**Seed / Precondition:**
-- Insert an existing lead behind the scenes with `name = X`, `email = Y` (via API or SQL).
-- Browser session starts fresh.
+### 1.2 Session Persistence After Page Refresh
+**Seed / Precondition:** User is logged in as Admin
 
 **Steps:**
-1. Navigate to `/`.
-2. Click “Aperte o play”.
-3. Fill `Nome` with any value (can match or differ from existing).
-4. Fill `Email` with the previously registered email `Y`.
-5. Click “Quero entrar na fila!”.
+1. Log in to admin panel with valid credentials
+2. Navigate to Movies section
+3. Refresh the browser page using `page.reload()`
+4. Check if user remains logged in
 
 **Expected Results:**
-- Form submission is processed.
-- An error popup appears with text equal to `ERROR_MESSAGES.DUPLICATE_LEAD`.
-- No new lead record is created in the database.
-- Existing lead with email `Y` remains unchanged.
+- User session persists after page refresh
+- User remains on the Movies section
+- Admin greeting message remains visible
 
 ---
 
-### 1.3 Reject Incorrect Email Format
-
-**Seed / Precondition:**
-- `leads` table empty.
-- Browser session fresh.
+### 1.3 Session Expiry Handling
+**Seed / Precondition:** User is logged in as Admin
 
 **Steps:**
-1. Navigate to `/`.
-2. Click “Aperte o play”.
-3. Fill `Nome` with a valid value (e.g., “Marcus Olivares”).
-4. Fill `Email` with an invalid email (e.g., `marcus.com.br`).
-5. Click “Quero entrar na fila!”.
+1. Log in to admin panel
+2. Simulate session expiry by clearing localStorage/sessionStorage tokens via `page.evaluate()`
+3. Attempt to perform an action (e.g., create a movie)
 
 **Expected Results:**
-- Submission does not succeed.
-- An alert element (selector `SELECTORS.ALERT`) displays `ERROR_MESSAGES.INVALID_EMAIL`.
-- No success popup is shown.
-- No lead record is created in the database.
+- User is redirected to login page
+- Appropriate error message is displayed
+- No data loss occurs
 
 ---
 
-### 1.4 Reject Missing Name with Valid Email
-
-**Seed / Precondition:**
-- `leads` table empty.
+### 1.4 Multiple Browser Tabs Session Sharing
+**Seed / Precondition:** User is logged in to admin panel
 
 **Steps:**
-1. Navigate to `/`.
-2. Click “Aperte o play”.
-3. Leave `Nome` empty.
-4. Fill `Email` with a valid email (e.g., `marcus@yahoo.com`).
-5. Click “Quero entrar na fila!”.
+1. Log in to admin panel in first tab
+2. Open a new browser context/tab
+3. Navigate directly to `/admin/movies` in the new tab
+4. Verify session is shared (if using shared storage)
 
 **Expected Results:**
-- An alert displays `ERROR_MESSAGES.REQUIRED_FIELD`.
-- No success popup is shown.
-- No lead record is created.
+- Session behavior is consistent across tabs
+- User either has access in both tabs or none
 
 ---
 
-### 1.5 Reject Missing Email with Valid Name
+## 2. Movie Management - Extended Coverage (NEW)
 
-**Seed / Precondition:**
-- `leads` table empty.
+### 2.1 Edit Existing Movie
+**Seed / Precondition:** A movie exists in the catalog (created via API)
 
 **Steps:**
-1. Navigate to `/`.
-2. Click “Aperte o play”.
-3. Fill `Nome` with a valid name (e.g., “Marcus Olivares”).
-4. Leave `Email` empty.
-5. Click “Quero entrar na fila!`.
+1. Log in to admin panel
+2. Navigate to Movies section
+3. Locate the existing movie in the table
+4. Click edit button/link for that movie (if available)
+5. Modify the movie title and synopsis
+6. Save changes
 
 **Expected Results:**
-- An alert displays `ERROR_MESSAGES.REQUIRED_FIELD`.
-- No success popup is shown.
-- No lead record is created.
+- Edit form is pre-populated with existing movie data
+- Success message confirms update
+- Updated data appears in the movie list
 
 ---
 
-### 1.6 Reject Missing Name and Email
-
-**Seed / Precondition:**
-- `leads` table empty.
+### 2.2 Featured Movie Toggle Functionality
+**Seed / Precondition:** User is logged in, on movie creation form
 
 **Steps:**
-1. Navigate to `/`.
-2. Click “Aperte o play”.
-3. Leave both `Nome` and `Email` empty.
-4. Click “Quero entrar na fila!”.
+1. Navigate to movie registration form
+2. Fill in all required fields
+3. Verify the "Featured" switch is OFF by default
+4. Toggle the "Featured" switch ON using `SELECTORS.FEATURED_SWITCH`
+5. Submit the form
+6. Verify movie was created as featured (via API or UI)
 
 **Expected Results:**
-- The alert area shows two required-field messages (e.g., array of `ERROR_MESSAGES.REQUIRED_FIELD`).
-- No success popup is shown.
-- No lead record is created.
+- Featured switch toggles between on/off states visually
+- Movie is correctly marked as featured when enabled
+- Featured status persists after form submission
 
 ---
 
-### 1.7 Delete Lead from Admin Leads Queue
-
-**Seed / Precondition:**
-- A lead exists in `leads` with a known `name` and `email`.
-  - Either create via UI (valid lead submission) or via API/SQL.
+### 2.3 Cover Image Upload - No Image Provided
+**Seed / Precondition:** User is logged in, on movie creation form
 
 **Steps:**
-1. As admin, log in with valid credentials.
-2. Navigate to the admin leads page (e.g., via `a[href$="admin/leads"]`).
-3. Locate the table row containing `Nome: <leadName> Email:` for the seeded lead.
-4. Click the delete button in that row.
-5. Confirm the removal (click element matching `SELECTORS.CONFIRM_REMOVAL`).
+1. Navigate to movie registration form
+2. Fill in title, synopsis, company, and year
+3. Do NOT upload a cover image
+4. Toggle featured switch and submit the form
 
 **Expected Results:**
-- A SweetAlert popup appears with:
-  - Title including “Tudo certo!”.
-  - Message containing “Lead removido com sucesso.”.
-- The deleted lead no longer appears in the leads table.
-- Lead record is removed from the `leads` table.
+- Validation error appears for missing cover image OR
+- Movie is created with a default/placeholder image
+- System handles missing image gracefully
 
 ---
 
-## 2. Admin Login and Authentication
-
-### 2.1 Successful Admin Login
-
-**Seed / Precondition:**
-- Valid admin credentials configured via environment variables.
-- User is logged out.
+### 2.4 Company Dropdown - All Options Available
+**Seed / Precondition:** User is logged in, on movie creation form
 
 **Steps:**
-1. Navigate to `/admin/login`.
-2. Verify the login form is visible (`SELECTORS.LOGIN_FORM`).
-3. Fill `E-mail` with the admin email.
-4. Fill `Senha` with the admin password.
-5. Click the “Entrar” button.
+1. Navigate to movie registration form
+2. Click on the Company dropdown (`SELECTORS.COMPANY_SELECT`)
+3. Count and verify all company options are displayed
+4. Select each company option and verify selection is applied
 
 **Expected Results:**
-- User is redirected to the admin dashboard or landing area.
-- The element matching `SELECTORS.LOGGED_USER` shows `LOGIN_STRINGS.USERNAME_GREETING('Admin')` (or correct username).
-- No error alerts are shown.
+- Dropdown opens and displays all available companies
+- Expected companies: Paramount Pictures, Columbia Pictures, Universal Pictures, Sony Pictures, Fox Entertainment, Netflix
+- Selection persists in the form
 
 ---
 
-### 2.2 Invalid Password
-
-**Seed / Precondition:**
-- Valid admin email; user logged out.
+### 2.5 Release Year Dropdown - Range Validation
+**Seed / Precondition:** User is logged in, on movie creation form
 
 **Steps:**
-1. Navigate to `/admin/login`.
-2. Fill `E-mail` with valid admin email.
-3. Fill `Senha` with an incorrect password.
-4. Click “Entrar”.
+1. Navigate to movie registration form
+2. Click on the Release Year dropdown (`SELECTORS.YEAR_SELECT`)
+3. Verify year options are available
+4. Check minimum and maximum year values
+5. Select oldest and newest years and verify
 
 **Expected Results:**
-- Login fails; user remains on login page.
-- An alert (e.g., `span[class$=alert]`) displays an appropriate error message (e.g., invalid credentials).
-- `SELECTORS.LOGGED_USER` is not visible / does not show a logged-in greeting.
+- Dropdown opens and displays available years
+- Years include a reasonable historical range
+- Both boundary years can be selected
 
 ---
 
-### 2.3 Invalid Email Format
-
-**Seed / Precondition:**
-- User logged out.
+### 2.6 Movie Title with Special Characters
+**Seed / Precondition:** User is logged in, on movie creation form
 
 **Steps:**
-1. Navigate to `/admin/login`.
-2. Fill `E-mail` with an invalid email (e.g., `admin`).
-3. Fill `Senha` with any value.
-4. Click “Entrar”.
+1. Navigate to movie registration form
+2. Enter title with special characters: `Test Movie: Part 2 - The 'Sequel' & More (2024)`
+3. Fill in other required fields with valid data
+4. Submit the form
+5. Search for the created movie using the special character title
 
 **Expected Results:**
-- Client-side or server-side validation prevents successful login.
-- An error alert appears describing invalid email format or general login failure.
-- User remains unauthenticated.
+- Movie is created successfully with special characters
+- Special characters are displayed correctly in the list
+- Search works correctly with special characters
 
 ---
 
-### 2.4 Required Fields Validation
-
-**Seed / Precondition:**
-- User logged out.
+### 2.7 Movie Title Maximum Length Boundary
+**Seed / Precondition:** User is logged in, on movie creation form
 
 **Steps:**
-1. Navigate to `/admin/login`.
-2. Leave both `E-mail` and `Senha` blank.
-3. Click “Entrar”.
+1. Navigate to movie registration form
+2. Generate a title with 256 characters
+3. Enter the long title in the title field
+4. Fill other required fields
+5. Submit the form
 
 **Expected Results:**
-- Validation errors appear for both fields (either inline or in an alert).
-- No authentication occurs.
-- User remains on login page.
+- Title field enforces max length validation
+- Either truncates input, shows validation error, or accepts the value
+- Database constraints are respected
 
 ---
 
-## 3. Movie Catalog Management
-
-### 3.1 Register New Movie (Happy Path)
-
-**Seed / Precondition:**
-- `movies` table empty (or at least no movie with the new title).
-- Valid admin credentials.
+### 2.8 Movie Synopsis with Line Breaks
+**Seed / Precondition:** User is logged in, on movie creation form
 
 **Steps:**
-1. Log in as admin.
-2. From admin area, navigate to the movie registration form (link ending with `register`).
-3. Fill “Titulo do filme” with a unique title (e.g., from fixture `data.create.title`).
-4. Fill “Sinopse” with movie overview.
-5. Select company via the company dropdown (`SELECTORS.COMPANY_SELECT`).
-6. Select release year via the year dropdown (`SELECTORS.YEAR_SELECT`).
-7. Upload a cover image using the cover input (`SELECTORS.COVER_INPUT`), pointing to a valid fixture path.
-8. Optionally toggle the “featured” switch (`SELECTORS.FEATURED_SWITCH`) according to fixture.
-9. Click “Cadastrar”.
+1. Navigate to movie registration form
+2. Enter a synopsis with multiple paragraphs/line breaks
+3. Fill other required fields
+4. Submit the form
+5. View the movie details
 
 **Expected Results:**
-- A success popup appears with text equal to `SUCCESS_MESSAGES.MOVIE_ADDED(title)`.
-- New movie appears in the movie list (if navigated to listing).
-- Entry exists in `movies` table with correct field values, including `featured` flag.
+- Line breaks are preserved or handled consistently
+- Synopsis displays correctly in the UI
+- No data corruption occurs
 
 ---
 
-### 3.2 Remove Existing Movie
-
-**Seed / Precondition:**
-- Insert a movie via API/SQL using fixture `data.to_remove`.
+### 2.9 Cancel Movie Creation Navigation
+**Seed / Precondition:** User is logged in, on movie creation form
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the movies listing page.
-3. Locate the row with the movie title specified in the fixture.
-4. Click the delete button in that row.
-5. Confirm the removal (click `.confirm-removal`).
+1. Navigate to movie registration form
+2. Fill in some fields with data
+3. Click back button or navigate to Movies list without submitting
+4. Return to movie creation form
 
 **Expected Results:**
-- A success popup appears with `SUCCESS_MESSAGES.MOVIE_REMOVED`.
-- The movie row disappears from the listing.
-- Movie is removed from the `movies` table.
+- Navigation away from form is possible
+- No movie is created
+- Form is reset upon return
 
 ---
 
-### 3.3 Prevent Duplicate Movie Title
-
-**Seed / Precondition:**
-- Insert a movie using fixture `data.duplicate` via API/SQL (existing title).
+### 2.10 Search Movies - Case Insensitivity
+**Seed / Precondition:** Movies exist with titles in various cases
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the movie registration form.
-3. Fill the form using the same `data.duplicate` fields (title, synopsis, company, year, cover).
-4. Click “Cadastrar”.
+1. Create movies with titles: "ZOMBIE ATTACK", "zombie attack", "Zombie Attack"
+2. Log in and navigate to Movies section
+3. Search for "zombie"
+4. Search for "ZOMBIE"
+5. Search for "ZoMbIe"
 
 **Expected Results:**
-- No new movie record is created.
-- An error popup appears matching `ERROR_MESSAGES.DUPLICATE_MOVIE(movie.title)`.
-- The original movie remains unchanged in the database.
+- All variations return the same results
+- Search is case-insensitive
+- All matching movies appear in results
 
 ---
 
-### 3.4 Mandatory Fields Validation
-
-**Seed / Precondition:**
-- Admin authenticated.
+### 2.11 Search Movies - Clear Search Results
+**Seed / Precondition:** User has performed a search with results
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the movie registration form.
-3. Leave all mandatory fields empty: title, synopsis, company, year, cover (and do not toggle featured).
-4. Click “Cadastrar”.
+1. Log in and navigate to Movies section
+2. Search for "zombie" and verify results
+3. Clear the search input field
+4. Click search or press Enter
+5. Observe results
 
 **Expected Results:**
-- No movie is saved.
-- Alert area (`SELECTORS.ALERT`) shows an array of required-field messages:
-  - Four entries of `ERROR_MESSAGES.REQUIRED_FIELD` (for the four mandatory inputs).
-- No success popup appears.
+- Clearing search shows all movies
+- Search can be reset to show full list
+- No stale results remain
 
 ---
 
-### 3.5 Search Movies – Term “zombie” Returns Matches
+## 3. TV Show Management - Extended Coverage (NEW)
 
-**Seed / Precondition:**
-- Insert a set of movies via API/SQL based on `data.search.data` (multiple titles containing “zombie” in different positions/variants).
+### 3.1 Edit Existing TV Show
+**Seed / Precondition:** A TV show exists in the catalog (created via API)
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the movie search/list page.
-3. In the search input (“Busque pelo nome”), type the value from `data.search.input` (e.g., “zombie”).
-4. Click the search button in `.actions button`.
-5. Wait for network to idle and at least one row to be visible.
+1. Log in to admin panel
+2. Navigate to TV Shows section
+3. Locate the existing TV show in the table
+4. Click edit button for that TV show (if available)
+5. Modify the title and number of seasons
+6. Save changes
 
 **Expected Results:**
-- Table rows include all expected titles from `data.search.outputs`.
-- `tableHave` assertion passes for all expected outputs.
-- No irrelevant results appear that do not match the search term.
+- Edit form is pre-populated with existing TV show data
+- Success message confirms update
+- Updated data appears in the TV show list
 
 ---
 
-### 3.6 Search Movies – No Results Case
-
-**Seed / Precondition:**
-- Movies table contains entries that do not match the term (or is empty).
+### 3.2 Seasons Field - Zero Value
+**Seed / Precondition:** User is logged in, on TV show creation form
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the movie search/list page.
-3. Type a term with no corresponding titles (e.g., a random string).
-4. Trigger the search.
+1. Navigate to TV show registration form
+2. Fill in all required fields
+3. Enter "0" in the Seasons field
+4. Submit the form
 
 **Expected Results:**
-- Table either shows an empty state or a “no results” message.
-- No existing movie titles are shown in the results.
-- No errors or crashes occur.
+- Zero seasons is either accepted or shows appropriate validation error
+- System handles edge case gracefully
+- Clear feedback is provided to user
 
 ---
 
-## 4. TV Show Catalog Management
-
-### 4.1 Register New TV Show (Happy Path)
-
-**Seed / Precondition:**
-- `tvshows` table empty (or no show with the new title).
+### 3.3 Seasons Field - Negative Value
+**Seed / Precondition:** User is logged in, on TV show creation form
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the TV shows admin section (`a[href$="admin/tvshows"]`).
-3. From there, click link to registration form (`a[href$="admin/tvshows/register"]`).
-4. Fill “Titulo da série” with a unique title from fixture `data.create.title`.
-5. Fill “Sinopse” with a valid overview.
-6. Select company via the company dropdown.
-7. Select release year via the year dropdown.
-8. Fill “Temporadas” with a valid integer number (e.g., `tvshow.season`).
-9. Upload a cover image from fixtures.
-10. Optionally toggle “featured” according to fixture.
-11. Click “Cadastrar”.
+1. Navigate to TV show registration form
+2. Fill in all required fields
+3. Enter "-5" in the Seasons field
+4. Submit the form
 
 **Expected Results:**
-- A success popup appears with `SUCCESS_MESSAGES.TVSHOW_ADDED(tvshow.title)`.
-- New TV show appears in the TV shows list.
-- Record is stored correctly in `tvshows` table, including seasons and featured flag.
+- Negative value is rejected
+- Appropriate validation error is displayed
+- Form is not submitted
 
 ---
 
-### 4.2 Remove Existing TV Show
-
-**Seed / Precondition:**
-- Insert a TV show via API/SQL using fixture `data.to_remove`.
+### 3.4 Seasons Field - Decimal Value
+**Seed / Precondition:** User is logged in, on TV show creation form
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the TV shows admin list (`goTvShows`).
-3. Find the row with the seeded tv show title.
-4. Click the delete button for that row.
-5. Confirm removal via `.confirm-removal`.
+1. Navigate to TV show registration form
+2. Fill in all required fields
+3. Enter "5.5" in the Seasons field
+4. Submit the form
 
 **Expected Results:**
-- A success popup appears with `SUCCESS_MESSAGES.TVSHOW_REMOVED`.
-- The TV show disappears from the table.
-- Record is removed from `tvshows` table.
+- Decimal value is either truncated to integer or rejected
+- Appropriate handling of non-integer input
+- Clear feedback to user
 
 ---
 
-### 4.3 Prevent Duplicate TV Show Title
-
-**Seed / Precondition:**
-- Insert a TV show using fixture `data.duplicate`.
+### 3.5 Seasons Field - Very Large Value
+**Seed / Precondition:** User is logged in, on TV show creation form
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the TV show registration form.
-3. Fill the form with the same fields as `data.duplicate`.
-4. Click “Cadastrar”.
+1. Navigate to TV show registration form
+2. Fill in all required fields
+3. Enter "999999" in the Seasons field
+4. Submit the form
 
 **Expected Results:**
-- No new TV show is created.
-- An error popup appears using `ERROR_MESSAGES.DUPLICATE_MOVIE(tvshow.title)` (shared message format).
-- Original TV show record is unchanged.
+- System handles large values appropriately
+- Either accepts with validation or shows error for unrealistic values
+- No server errors or crashes
 
 ---
 
-### 4.4 TV Show Mandatory Fields Validation
-
-**Seed / Precondition:**
-- Admin authenticated.
+### 3.6 TV Show Search - Partial Match
+**Seed / Precondition:** TV shows exist with similar titles
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the TV shows admin section, then to the registration form.
-3. Leave all mandatory fields empty (title, synopsis, company, year, seasons, cover).
-4. Click “Cadastrar”.
+1. Create TV shows: "Walking Dead", "Fear the Walking Dead", "Walking Tall"
+2. Log in to admin panel
+3. Navigate to TV Shows section
+4. Search for "Walking"
+5. Observe results
 
 **Expected Results:**
-- An alert area shows:
-  - Four entries of `ERROR_MESSAGES.REQUIRED_FIELD`.
-  - One entry of `ERROR_MESSAGES.NUMBERS_ONLY` for the “Temporadas” field.
-- No success popup appears.
-- No TV show record is created.
+- All TV shows containing "Walking" in title are displayed
+- Search is case-insensitive
+- Results are accurate
 
 ---
 
-### 4.5 Search TV Shows – Term “zombie” Returns Matches
-
-**Seed / Precondition:**
-- Insert TV shows via API/SQL based on `data.search.data` (multiple zombie-related shows).
+### 3.7 TV Show Search - No Results
+**Seed / Precondition:** User is logged in, TV shows exist in catalog
 
 **Steps:**
-1. Log in as admin.
-2. Navigate to the TV shows admin list (`goTvShows`).
-3. In the search field (“Busque pelo nome”), type `data.search.input` (e.g., “zombie”).
-4. Click the search button in `.actions button`.
-5. Wait for network idle and at least one row to be visible.
+1. Navigate to TV Shows section
+2. Search for "nonexistenttvshow12345"
+3. Observe results
 
 **Expected Results:**
-- Table rows contain all expected titles from `data.search.outputs`.
-- No unexpected titles are present.
-- Search is responsive and does not hang or error.
+- No results are displayed
+- Empty state message or indication is shown
+- No errors occur
 
 ---
 
-### 4.6 Seasons Field – Numeric Validation
+## 4. Lead Management - Extended Coverage (NEW)
 
-**Seed / Precondition:**
-- Admin authenticated.
+### 4.1 Lead Deletion Confirmation Cancel
+**Seed / Precondition:** A lead exists in the system
 
 **Steps:**
-1. Navigate to the TV show registration form.
-2. Fill all fields correctly except “Temporadas”.
-3. In “Temporadas”, enter a non-numeric value (e.g., `ten`, `1a`).
-4. Click “Cadastrar”.
+1. Log in to admin panel
+2. Navigate to Leads section
+3. Click delete button for a lead
+4. When confirmation dialog appears (`.confirm-removal`), look for cancel option
+5. Cancel the deletion if possible, or press Escape
 
 **Expected Results:**
-- Submission fails.
-- Alert area for validation displays `ERROR_MESSAGES.NUMBERS_ONLY`.
-- No TV show is created.
+- Deletion can be cancelled
+- Lead remains in the list
+- No data is deleted
 
 ---
 
-## 5. Cross-Cutting UI and UX Scenarios
-
-### 5.1 Modal Behavior for Lead Form
-
-**Seed / Precondition:**
-- Landing page reachable; `leads` table state irrelevant.
+### 4.2 Multiple Leads Sequential Deletion
+**Seed / Precondition:** Multiple leads exist in the system (3+)
 
 **Steps:**
-1. Navigate to `/`.
-2. Click “Aperte o play”.
-3. Observe modal header text (“Fila de espera”).
-4. Attempt to close the modal via any available control (close button, “X”, overlay click if supported).
+1. Create 3 leads via API with unique emails
+2. Log in to admin panel
+3. Navigate to Leads section
+4. Delete the first lead and confirm
+5. Immediately delete the second lead and confirm
+6. Verify both deletions completed
 
 **Expected Results:**
-- Modal appears with correct title and layout.
-- Focus is trapped within the modal for keyboard users.
-- Closing action returns user to landing page state without reloading or leaving the site.
-- Subsequent re-open works correctly and fields are reset.
+- Both leads are deleted successfully
+- No race conditions or errors occur
+- Success messages appear for each deletion
+- Remaining lead is still visible
 
 ---
 
-### 5.2 Error and Success Message Localization/Copy
-
-**Seed / Precondition:**
-- Various success and error conditions reproducible (as in scenarios above).
+### 4.3 Lead Email with Plus Sign
+**Seed / Precondition:** User is on the landing page
 
 **Steps:**
-1. Trigger each defined error and success condition:
-   - Lead success.
-   - Duplicate lead.
-   - Duplicate movie.
-   - Required-field alerts.
-   - Numbers-only alert for seasons.
-   - Movie/TV show added/removed.
-2. Capture the on-screen text for each.
+1. Navigate to landing page
+2. Open the lead registration modal
+3. Enter name: "Test User"
+4. Enter email: "test+alias@example.com"
+5. Submit the form
 
 **Expected Results:**
-- Text matches the strings defined in `ERROR_MESSAGES` and `SUCCESS_MESSAGES`.
-- Language and tone are consistent (Portuguese, formal/consistent style).
-- No truncation or overlapping UI issues.
+- Email with plus sign is accepted as valid
+- Lead is registered successfully
+- Success message appears
 
 ---
 
-## 6. Non-Functional and Technical Scenarios
-
-### 6.1 Basic Performance – Search Responsiveness
-
-**Seed / Precondition:**
-- Sufficient number of movies/TV shows seeded to simulate a realistic catalog.
+### 4.4 Lead Name with Unicode Characters
+**Seed / Precondition:** User is on the landing page
 
 **Steps:**
-1. Log in as admin.
-2. Perform a series of searches for movies and TV shows with different terms.
-3. Measure time from clicking search to first visible row appearing.
+1. Navigate to landing page
+2. Open the lead registration modal
+3. Enter name with accents: "Jose Maria de Oliveira"
+4. Enter valid email
+5. Submit the form
+6. Log in as admin and view lead in admin panel
 
 **Expected Results:**
-- Search results appear within an acceptable time (e.g., < 2 seconds under normal conditions).
-- UI remains responsive, with no long freezes.
-- No console errors related to search.
+- Unicode characters in name are accepted
+- Lead is registered successfully
+- Name is displayed correctly in admin panel
 
 ---
 
-### 6.2 Basic Security – Admin Routes Not Accessible Without Login
-
-**Seed / Precondition:**
-- User logged out.
+### 4.5 Lead Email with Subdomain
+**Seed / Precondition:** User is on the landing page
 
 **Steps:**
-1. Directly navigate to `/admin/leads`.
-2. Directly navigate to `/admin/tvshows`.
-3. Directly navigate to movie registration or TV show registration URLs.
+1. Navigate to landing page
+2. Open the lead registration modal
+3. Enter name: "Test User"
+4. Enter email: "test@mail.subdomain.example.com"
+5. Submit the form
 
 **Expected Results:**
-- Application redirects to `/admin/login` or shows an access denied message.
-- No admin content is visible without authentication.
+- Complex email format is accepted
+- Lead is registered successfully
 
+---
+
+### 4.6 Lead Form - Maximum Name Length
+**Seed / Precondition:** User is on the landing page
+
+**Steps:**
+1. Navigate to landing page
+2. Open the lead registration modal
+3. Enter a very long name (200+ characters)
+4. Enter valid email
+5. Submit the form
+
+**Expected Results:**
+- Name field has max length validation or accepts long names
+- System handles gracefully without errors
+
+---
+
+### 4.7 Lead Form Reset on Modal Close
+**Seed / Precondition:** User is on the landing page
+
+**Steps:**
+1. Navigate to landing page
+2. Open the lead registration modal
+3. Enter partial data (name only)
+4. Close the modal without submitting (click X or outside)
+5. Reopen the modal
+
+**Expected Results:**
+- Form fields are cleared when modal reopens
+- Previous input is not persisted
+
+---
+
+## 5. Navigation and UI (NEW)
+
+### 5.1 Admin Panel Navigation - Movies to TV Shows
+**Seed / Precondition:** User is logged in to admin panel
+
+**Steps:**
+1. Log in to admin panel
+2. Verify Movies section is displayed (default)
+3. Click on TV Shows navigation link (`a[href$="admin/tvshows"]`)
+4. Verify TV Shows page loads
+5. Click back to Movies section
+
+**Expected Results:**
+- Navigation between sections is smooth
+- Correct section content is displayed
+- Active navigation item is highlighted
+- No page reload necessary
+
+---
+
+### 5.2 Admin Panel Navigation - Movies to Leads
+**Seed / Precondition:** User is logged in to admin panel
+
+**Steps:**
+1. Log in to admin panel
+2. Click on Leads navigation link (`a[href$="admin/leads"]`)
+3. Verify Leads page loads with lead list
+4. Navigate back to Movies
+
+**Expected Results:**
+- Navigation to Leads section works
+- Lead list is displayed
+- Return navigation works
+
+---
+
+### 5.3 Admin Panel - Direct URL Access When Logged In
+**Seed / Precondition:** User is logged in to admin panel
+
+**Steps:**
+1. Log in to admin panel
+2. Directly navigate to `/admin/tvshows/register`
+3. Verify the TV show registration form is displayed
+4. Directly navigate to `/admin/leads`
+5. Verify leads list is displayed
+
+**Expected Results:**
+- Direct URL access works for authenticated users
+- Correct page content is displayed
+- Session is maintained
+
+---
+
+### 5.4 Empty State - Movies List
+**Seed / Precondition:** Database has no movies
+
+**Steps:**
+1. Execute SQL: `DELETE FROM movies`
+2. Log in to admin panel
+3. Navigate to Movies section
+4. Observe the empty list state
+
+**Expected Results:**
+- Empty state message is displayed or table shows no rows
+- "Add Movie" action/link is still accessible
+- No errors or broken UI elements
+
+---
+
+### 5.5 Empty State - TV Shows List
+**Seed / Precondition:** Database has no TV shows
+
+**Steps:**
+1. Execute SQL: `DELETE FROM tvshows`
+2. Log in to admin panel
+3. Navigate to TV Shows section
+4. Observe the empty list state
+
+**Expected Results:**
+- Empty state message is displayed
+- "Add TV Show" action is still accessible
+- No errors or broken UI
+
+---
+
+### 5.6 Empty State - Leads List
+**Seed / Precondition:** Database has no leads
+
+**Steps:**
+1. Execute SQL: `DELETE FROM leads`
+2. Log in to admin panel
+3. Navigate to Leads section
+4. Observe the empty list state
+
+**Expected Results:**
+- Empty state message or empty table is displayed
+- No errors or broken UI
+
+---
+
+## 6. Landing Page (NEW)
+
+### 6.1 Landing Page Initial Load
+**Seed / Precondition:** None
+
+**Steps:**
+1. Navigate to the root URL (`/`)
+2. Observe page elements
+3. Verify all visual elements load
+
+**Expected Results:**
+- Landing page loads successfully within 3 seconds
+- Hero section with call-to-action is visible
+- "Aperte o play" button is visible and clickable
+- No console errors
+
+---
+
+### 6.2 Landing Page - Modal Escape Key Close
+**Seed / Precondition:** User is on landing page
+
+**Steps:**
+1. Navigate to landing page
+2. Open the lead registration modal
+3. Press Escape key
+4. Observe modal behavior
+
+**Expected Results:**
+- Modal closes when Escape key is pressed OR
+- Modal remains open (design decision - document expected behavior)
+- No errors occur
+
+---
+
+### 6.3 Landing Page - Modal Click Outside Close
+**Seed / Precondition:** User is on landing page
+
+**Steps:**
+1. Navigate to landing page
+2. Open the lead registration modal
+3. Click outside the modal area (on the overlay/backdrop)
+4. Observe modal behavior
+
+**Expected Results:**
+- Modal closes when clicking outside OR
+- Modal remains open (design decision)
+- Behavior is consistent and documented
+
+---
+
+### 6.4 Landing Page - Keyboard Navigation
+**Seed / Precondition:** User is on landing page
+
+**Steps:**
+1. Navigate to landing page
+2. Use Tab key to navigate through focusable elements
+3. Press Enter on "Aperte o play" button
+4. Use Tab to navigate form fields in modal
+5. Verify form can be submitted via keyboard (Enter on button)
+
+**Expected Results:**
+- All interactive elements are keyboard accessible
+- Focus order is logical
+- Form can be fully operated via keyboard
+
+---
+
+## 7. Data Integrity and Persistence (NEW)
+
+### 7.1 Movie Data Persistence Verification
+**Seed / Precondition:** None
+
+**Steps:**
+1. Log in and create a new movie with unique title via UI
+2. Log out
+3. Close browser completely
+4. Reopen browser and log in again
+5. Search for the created movie
+
+**Expected Results:**
+- Movie persists in the database
+- Movie appears in search results
+- All movie data fields are intact
+
+---
+
+### 7.2 Lead Registration and Admin View Consistency
+**Seed / Precondition:** None
+
+**Steps:**
+1. Register a new lead with specific name and email via landing page
+2. Verify success message
+3. Log in to admin panel
+4. Navigate to Leads section
+5. Find the newly registered lead
+
+**Expected Results:**
+- Lead appears in admin panel
+- Name and email match exactly what was submitted
+- No data transformation or loss
+
+---
+
+### 7.3 API Data Matches UI Display
+**Seed / Precondition:** Valid admin credentials
+
+**Steps:**
+1. Create a movie via API with specific field values
+2. Log in to admin panel
+3. Find the movie in the list
+4. Compare displayed data with API-sent data
+
+**Expected Results:**
+- All fields match exactly
+- No data transformation errors
+- Cover image path is resolved correctly
+
+---
+
+## 8. Error Handling (NEW)
+
+### 8.1 Network Error During Form Submission
+**Seed / Precondition:** User is logged in, on movie creation form
+
+**Steps:**
+1. Navigate to movie creation form
+2. Fill in all required fields
+3. Use `page.route()` to simulate network failure on the API endpoint
+4. Submit the form
+5. Restore network and retry
+
+**Expected Results:**
+- Appropriate error message is displayed
+- Form data is preserved for retry
+- User can retry submission
+- No duplicate entries created
+
+---
+
+### 8.2 Invalid Session Token API Response
+**Seed / Precondition:** User is logged in
+
+**Steps:**
+1. Log in to admin panel
+2. Use `page.evaluate()` to corrupt the session token in storage
+3. Attempt to create a movie
+
+**Expected Results:**
+- Request fails with authentication error
+- User is redirected to login
+- Error message is user-friendly
+
+---
+
+## 9. Accessibility (NEW)
+
+### 9.1 Form Labels Association
+**Seed / Precondition:** User is on movie creation form
+
+**Steps:**
+1. Navigate to movie creation form
+2. Click on each form label
+3. Verify clicking label focuses the associated input
+4. Use accessibility audit tool
+
+**Expected Results:**
+- All form fields have associated labels
+- Labels are properly connected to inputs via `for` attribute or nesting
+- Form is screen reader accessible
+
+---
+
+### 9.2 Focus Management in Modal
+**Seed / Precondition:** User is on landing page
+
+**Steps:**
+1. Navigate to landing page
+2. Tab to "Aperte o play" button and press Enter
+3. Verify focus moves to modal
+4. Tab through modal elements
+5. Close modal and verify focus returns
+
+**Expected Results:**
+- Focus is trapped within modal while open
+- Tab cycle stays within modal
+- Focus returns to trigger element on close
+
+---
+
+### 9.3 Error Message Accessibility
+**Seed / Precondition:** User is on movie creation form
+
+**Steps:**
+1. Navigate to movie creation form
+2. Submit empty form to trigger validation errors
+3. Check if error messages are announced to screen readers
+4. Verify errors have appropriate ARIA attributes
+
+**Expected Results:**
+- Error messages have `role="alert"` or similar
+- Errors are announced to assistive technology
+- Visual error indicators are present
+
+---
+
+## 10. Security (NEW)
+
+### 10.1 XSS Prevention in Movie Title
+**Seed / Precondition:** User is logged in
+
+**Steps:**
+1. Navigate to movie creation form
+2. Enter title: `<script>alert('XSS')</script>`
+3. Fill other required fields
+4. Submit the form
+5. View the movie in the list
+
+**Expected Results:**
+- Script is not executed
+- Title is displayed as escaped text
+- No XSS vulnerability
+
+---
+
+### 10.2 XSS Prevention in Lead Name
+**Seed / Precondition:** User is on landing page
+
+**Steps:**
+1. Navigate to landing page
+2. Open lead registration modal
+3. Enter name: `<img src=x onerror=alert('XSS')>`
+4. Enter valid email
+5. Submit the form
+6. View lead in admin panel
+
+**Expected Results:**
+- Malicious content is not executed
+- Name is sanitized or HTML-escaped
+- No XSS vulnerability
+
+---
+
+### 10.3 SQL Injection Prevention in Search
+**Seed / Precondition:** User is logged in
+
+**Steps:**
+1. Navigate to movie search
+2. Enter search term: `'; DROP TABLE movies; --`
+3. Execute search
+4. Verify database integrity
+
+**Expected Results:**
+- Search returns no results or handles safely
+- Database tables remain intact
+- Application continues to function
+
+---
+
+### 10.4 Admin Route Deep Link Protection
+**Seed / Precondition:** User is NOT logged in
+
+**Steps:**
+1. Directly navigate to `/admin/movies/register`
+2. Directly navigate to `/admin/tvshows/register`
+3. Directly navigate to `/admin/leads/some-id`
+
+**Expected Results:**
+- All routes redirect to login
+- No admin functionality is accessible
+- URL patterns don't expose sensitive information
+
+---
+
+## 11. Performance (NEW)
+
+### 11.1 Large Dataset - Movies List Load Time
+**Seed / Precondition:** 50+ movies exist in database
+
+**Steps:**
+1. Seed 50 movies via API in `beforeAll`
+2. Log in to admin panel
+3. Measure time from navigation to Movies until table is fully rendered
+4. Scroll through the list
+
+**Expected Results:**
+- Page loads within 3 seconds
+- Scrolling is smooth (60fps)
+- No browser memory warnings
+
+---
+
+### 11.2 Rapid Consecutive Searches
+**Seed / Precondition:** Movies exist in database
+
+**Steps:**
+1. Log in to admin panel
+2. Rapidly type in search field: "z", "zo", "zom", "zomb", "zombie"
+3. Observe search behavior
+
+**Expected Results:**
+- Search debounces or handles rapid input gracefully
+- No race conditions in results
+- Final results match "zombie" search term
+
+---
+
+### 11.3 Image Upload - Large File Handling
+**Seed / Precondition:** User is logged in, on movie creation form
+
+**Steps:**
+1. Navigate to movie creation form
+2. Fill required fields
+3. Attempt to upload a large image (5MB+)
+4. Observe upload behavior
+
+**Expected Results:**
+- Upload progress is indicated (if supported)
+- System either accepts or rejects with clear size error
+- No browser hang or timeout
+
+---
+
+## Test Data Requirements
+
+### Movies Fixture Data Additions
+```json
+{
+  "special_chars": {
+    "title": "Zombie: Part 2 - The 'Sequel' & More (2024)",
+    "overview": "A test movie with special characters",
+    "company": "Universal Pictures",
+    "release_year": 2024,
+    "featured": false,
+    "cover": "/covers/movies/wwz.png"
+  },
+  "long_title": {
+    "title": "[256 character string]",
+    "overview": "Testing maximum length",
+    "company": "Netflix",
+    "release_year": 2024,
+    "featured": false,
+    "cover": "/covers/movies/wwz.png"
+  }
+}
+```
+
+### TV Shows Fixture Data Additions
+```json
+{
+  "edge_cases": {
+    "zero_seasons": { "season": 0 },
+    "negative_seasons": { "season": -5 },
+    "decimal_seasons": { "season": 5.5 },
+    "large_seasons": { "season": 999999 }
+  }
+}
+```
+
+### Leads Fixture Data Additions
+```json
+{
+  "plus_email": {
+    "name": "Test User",
+    "email": "test+alias@example.com"
+  },
+  "unicode_name": {
+    "name": "Jose Maria de Oliveira",
+    "email": "jose@example.com"
+  },
+  "long_name": {
+    "name": "[200 character string]",
+    "email": "longname@example.com"
+  }
+}
+```
+
+---
+
+## Environment Setup Notes
+
+- Database: PostgreSQL at `localhost:5432`
+- Database name: `zombieplus`
+- Admin credentials: `admin@zombieplus.com` / `pwd123`
+- Base URL: `http://localhost:3000`
+- API URL: `http://localhost:3333`
+
+---
+
+## Test Execution Priority
+
+### P0 - Critical (Must have for release)
+- 1.1 Admin Logout Functionality
+- 2.1 Edit Existing Movie
+- 3.1 Edit Existing TV Show
+- 10.1-10.3 Security Tests (XSS, SQL Injection)
+- 8.1 Network Error Handling
+
+### P1 - High (Should have)
+- 1.2 Session Persistence
+- 2.2 Featured Movie Toggle
+- 2.3 Cover Image - No Image Provided
+- 3.2-3.5 Seasons Field Edge Cases
+- 4.1 Lead Deletion Confirmation Cancel
+- 5.1-5.3 Navigation Tests
+- 10.4 Admin Route Deep Link Protection
+
+### P2 - Medium (Nice to have)
+- 2.4-2.5 Dropdown Selection Tests
+- 2.6-2.8 Field Boundary Tests
+- 4.3-4.6 Lead Edge Cases
+- 6.1-6.4 Landing Page Tests
+- 9.1-9.3 Accessibility Tests
+
+### P3 - Low (Future consideration)
+- 11.1-11.3 Performance Tests
+- 1.4 Multiple Browser Tabs
+- 7.1-7.3 Data Persistence Verification
+
+---
+
+## Implementation Notes
+
+- Use existing page objects from `tests/support/actions/`
+- Leverage constants from `tests/support/constants.ts`
+- Use API helpers from `tests/support/api/index.ts` for test data setup
+- Use `executeSQL()` from `tests/support/database.ts` for database cleanup
+- Follow existing naming conventions with `@agent` tag for new tests

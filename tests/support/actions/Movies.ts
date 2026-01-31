@@ -9,6 +9,11 @@ export class Movies {
     this.page = page
   }
 
+  async goToList(): Promise<void> {
+    await this.page.goto('/admin/movies')
+    await this.page.waitForLoadState('networkidle')
+  }
+
   async goForm(): Promise<void> {
     await this.page.locator('a[href$="register"]').click()
   }
@@ -34,9 +39,58 @@ export class Movies {
     await this.submit()
   }
 
+  async openEditForm(title: string): Promise<void> {
+    const movieRow = this.page.getByRole('row', { name: title })
+    await movieRow.locator('[data-testid="edit-button"]').click()
+  }
+
+  async edit(movie: Partial<Movie>): Promise<void> {
+    if (movie.title !== undefined) {
+      await this.page.getByLabel('Titulo do filme').clear()
+      await this.page.getByLabel('Titulo do filme').fill(movie.title)
+    }
+
+    if (movie.overview !== undefined) {
+      await this.page.getByLabel('Sinopse').clear()
+      await this.page.getByLabel('Sinopse').fill(movie.overview)
+    }
+
+    if (movie.company !== undefined) {
+      await this.page.locator(SELECTORS.COMPANY_SELECT).click()
+      await this.page.locator(SELECTORS.SELECT_OPTION).filter({ hasText: movie.company }).click()
+    }
+
+    if (movie.release_year !== undefined) {
+      await this.page.locator(SELECTORS.YEAR_SELECT).click()
+      await this.page.locator(SELECTORS.SELECT_OPTION).filter({ hasText: movie.release_year.toString() }).click()
+    }
+
+    if (movie.featured !== undefined) {
+      const featuredSwitch = this.page.locator(SELECTORS.FEATURED_SWITCH)
+      const isFeatured = await this.page.locator('input[name="featured"]').isChecked()
+
+      if (movie.featured !== isFeatured) {
+        await featuredSwitch.click()
+      }
+    }
+  }
+
+  async saveEdit(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Salvar' }).click()
+  }
+
+  async cancelEdit(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Cancelar' }).click()
+  }
+
   async search(target: string): Promise<void> {
     await this.page.getByPlaceholder('Busque pelo nome').fill(target)
     await this.page.click('.actions button')
+    // Wait for search results to load - wait for either table or no results message
+    await Promise.race([
+      this.page.locator('table').waitFor({ state: 'visible', timeout: 10000 }),
+      this.page.getByText('Nenhum registro encontrado!').waitFor({ state: 'visible', timeout: 10000 })
+    ])
   }
 
   async tableHave(content: string | string[]): Promise<void> {
@@ -60,7 +114,10 @@ export class Movies {
   }
 
   async remove(title: string): Promise<void> {
-    await this.page.getByRole('row', { name: title }).getByRole('button').click()
+    // Wait for the movie row to be visible before clicking
+    const row = this.page.getByRole('row', { name: title })
+    await row.waitFor({ state: 'visible', timeout: 10000 })
+    await row.getByRole('button').click()
     await this.page.click('.confirm-removal')
   }
 }

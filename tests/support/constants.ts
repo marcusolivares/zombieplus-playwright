@@ -1,6 +1,6 @@
 // Default admin credentials
 export const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL
-export const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD 
+export const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 
 // UI Error Messages
 export const ERROR_MESSAGES = {
@@ -15,8 +15,10 @@ export const ERROR_MESSAGES = {
 // UI Success Messages
 export const SUCCESS_MESSAGES = {
   MOVIE_ADDED: (title: string) => `O filme '${title}' foi adicionado ao catálogo.`,
+  MOVIE_UPDATED: (title: string) => `O filme '${title}' foi atualizado com sucesso.`,
   MOVIE_REMOVED: 'Filme removido com sucesso.',
   TVSHOW_ADDED: (title: string) => `A série '${title}' foi adicionada ao catálogo.`,
+  TVSHOW_UPDATED: (title: string) => `A série '${title}' foi atualizada com sucesso.`,
   TVSHOW_REMOVED: 'Série removida com sucesso.',
   LEAD_SUCCESS:
     'Agradecemos por compartilhar seus dados conosco. Em breve, nossa equipe entrará em contato.'
