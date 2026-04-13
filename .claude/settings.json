@@ -8,5 +8,10 @@
         "run-test-mcp-server"
       ]
     }
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)"
+    ]
   }
 }
