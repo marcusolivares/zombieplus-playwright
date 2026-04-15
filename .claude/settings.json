@@ -9,9 +9,24 @@
       ]
     }
   },
+  "env": {
+    "BASH_MAX_OUTPUT_LENGTH": "150000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "75"
+  },
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)"
+    ],
+    "deny": [
+      "Read(node_modules/**)",
+      "Edit(node_modules/**)",
+      "Write(node_modules/**)",
+      "Read(dist/**)",
+      "Edit(dist/**)",
+      "Write(dist/**)",
+      "Read(coverage/**)",
+      "Edit(coverage/**)",
+      "Write(coverage/**)"
     ]
   }
 }
