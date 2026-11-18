@@ -1,14 +1,5 @@
 {
-  "mcpServers": {
-    "playwright-test": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "playwright",
-        "run-test-mcp-server"
-      ]
-    }
-  },
+  "enabledMcpjsonServers": ["playwright-test"],
   "env": {
     "BASH_MAX_OUTPUT_LENGTH": "150000",
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "75"
